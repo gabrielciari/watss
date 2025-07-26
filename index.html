@@ -1,128 +1,59 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <title>Controle de Vencimento de Ração</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 700px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #4CAF50;
-    }
-    input, button {
-      padding: 10px;
-      margin: 5px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .racao {
-      padding: 10px;
-      border-bottom: 1px solid #ccc;
-    }
-    .vencida {
-      background-color: #ffdddd;
-    }
-    .alerta {
-      background-color: #fff3cd;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Controle de Vencimento de Ração</h1>
+function mostrarRacoes() {
+  const racoes = carregarRacoes();
+  lista.innerHTML = "";
 
-    <input type="text" id="nome" placeholder="Nome da ração">
-    <input type="date" id="validade">
-    <input type="number" id="quantidade" placeholder="Quantidade (kg)">
-    <button onclick="adicionarRacao()">Adicionar</button>
+  const hoje = new Date();
 
-    <h2>Rações Cadastradas:</h2>
-    <div id="listaRacoes"></div>
-  </div>
+  // Pede permissão para mostrar notificação (uma vez só)
+  if (Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
 
-  <script>
-    const lista = document.getElementById("listaRacoes");
+  racoes.forEach((racao, index) => {
+    const div = document.createElement("div");
+    div.className = "racao";
+    
+    const dataValidade = new Date(racao.validade);
+    const diasRestantes = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
 
-    function salvarRacoes(racoes) {
-      localStorage.setItem("racoes", JSON.stringify(racoes));
-    }
+    // Alerta e envio para WhatsApp
+    if (diasRestantes <= 30 && diasRestantes >= 0) {
+      const mensagem = `⚠️ Alerta: A ração "${racao.nome}" vence em ${diasRestantes} dia(s)!`;
+      console.log(mensagem);
 
-    function carregarRacoes() {
-      return JSON.parse(localStorage.getItem("racoes") || "[]");
-    }
-
-    function adicionarRacao() {
-      const nome = document.getElementById("nome").value.trim();
-      const validade = document.getElementById("validade").value;
-      const quantidade = document.getElementById("quantidade").value;
-
-      if (!nome || !validade || !quantidade) {
-        alert("Preencha todos os campos!");
-        return;
+      // Notificação na tela
+      if (Notification.permission === "granted") {
+        new Notification("Alerta de Ração", {
+          body: mensagem,
+          icon: "https://cdn-icons-png.flaticon.com/512/616/616408.png"
+        });
       }
 
-      const racoes = carregarRacoes();
-      racoes.push({ nome, validade, quantidade });
-      salvarRacoes(racoes);
-      document.getElementById("nome").value = "";
-      document.getElementById("validade").value = "";
-      document.getElementById("quantidade").value = "";
-      mostrarRacoes();
+      // Define o número de destino (com DDI, DDD e número, sem espaços ou traços)
+      const numero = "5599999999999"; // <-- Altere aqui para seu número com DDI/DDD
+
+      // Monta o link do WhatsApp
+      const link = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
+
+      // Abre o WhatsApp com a mensagem pronta (só uma vez por ração)
+      window.open(link, "_blank");
     }
 
-    function mostrarRacoes() {
-      const racoes = carregarRacoes();
-      lista.innerHTML = "";
-
-      const hoje = new Date();
-
-      racoes.forEach((racao, index) => {
-        const div = document.createElement("div");
-        div.className = "racao";
-        
-        const dataValidade = new Date(racao.validade);
-        const diasRestantes = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
-
-        if (diasRestantes < 0) {
-          div.classList.add("vencida");
-        } else if (diasRestantes <= 5) {
-          div.classList.add("alerta");
-        }
-
-        div.innerHTML = `
-          <strong>${racao.nome}</strong><br>
-          Validade: ${racao.validade} (${diasRestantes < 0 ? 'VENCIDA' : diasRestantes + ' dia(s)'})<br>
-          Quantidade: ${racao.quantidade} kg<br>
-          <button onclick="removerRacao(${index})">Remover</button>
-        `;
-        lista.appendChild(div);
-      });
+    if (diasRestantes < 0) {
+      div.classList.add("vencida");
+    } else if (diasRestantes <= 5) {
+      div.classList.add("alerta");
     }
 
-    function removerRacao(index) {
-      const racoes = carregarRacoes();
-      racoes.splice(index, 1);
-      salvarRacoes(racoes);
-      mostrarRacoes();
-    }
+    div.innerHTML = `
+      <strong>${racao.nome}</strong><br>
+      Validade: ${racao.validade} (${diasRestantes < 0 ? 'VENCIDA' : diasRestantes + ' dia(s)'})<br>
+      Quantidade: ${racao.quantidade} kg<br>
+      <button onclick="removerRacao(${index})">Remover</button>
+    `;
+    lista.appendChild(div);
+  });
+}
 
-    // Mostrar ao carregar a página
-    mostrarRacoes();
-  </script>
-</body>
-</html>
 
 
