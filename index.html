@@ -1,59 +1,55 @@
-function mostrarRacoes() {
-  const racoes = carregarRacoes();
-  lista.innerHTML = "";
-
-  const hoje = new Date();
-
-  // Pede permissão para mostrar notificação (uma vez só)
-  if (Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
-
-  racoes.forEach((racao, index) => {
-    const div = document.createElement("div");
-    div.className = "racao";
-    
-    const dataValidade = new Date(racao.validade);
-    const diasRestantes = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
-
-    // Alerta e envio para WhatsApp
-    if (diasRestantes <= 30 && diasRestantes >= 0) {
-      const mensagem = `⚠️ Alerta: A ração "${racao.nome}" vence em ${diasRestantes} dia(s)!`;
-      console.log(mensagem);
-
-      // Notificação na tela
-      if (Notification.permission === "granted") {
-        new Notification("Alerta de Ração", {
-          body: mensagem,
-          icon: "https://cdn-icons-png.flaticon.com/512/616/616408.png"
-        });
-      }
-
-      // Define o número de destino (com DDI, DDD e número, sem espaços ou traços)
-      const numero = "5599999999999"; // <-- Altere aqui para seu número com DDI/DDD
-
-      // Monta o link do WhatsApp
-      const link = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
-
-      // Abre o WhatsApp com a mensagem pronta (só uma vez por ração)
-      window.open(link, "_blank");
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Click Game</title>
+  <style>
+    body {
+      text-align: center;
+      background: #f0f0f0;
+      font-family: Arial, sans-serif;
     }
-
-    if (diasRestantes < 0) {
-      div.classList.add("vencida");
-    } else if (diasRestantes <= 5) {
-      div.classList.add("alerta");
+    h1 {
+      margin-top: 30px;
+      font-size: 2.5em;
+      color: #333;
     }
+    #score {
+      font-size: 2em;
+      margin: 20px;
+      color: #444;
+    }
+    #clickBtn {
+      background-color: #ffcc00;
+      border: none;
+      padding: 20px 40px;
+      font-size: 1.5em;
+      border-radius: 15px;
+      cursor: pointer;
+      box-shadow: 0px 4px #999;
+      transition: 0.2s;
+    }
+    #clickBtn:active {
+      box-shadow: 0px 2px #666;
+      transform: translateY(2px);
+    }
+  </style>
+</head>
+<body>
+  <h1>Click Game</h1>
+  <div id="score">Pontos: 0</div>
+  <button id="clickBtn">Clique Aqui!</button>
 
-    div.innerHTML = `
-      <strong>${racao.nome}</strong><br>
-      Validade: ${racao.validade} (${diasRestantes < 0 ? 'VENCIDA' : diasRestantes + ' dia(s)'})<br>
-      Quantidade: ${racao.quantidade} kg<br>
-      <button onclick="removerRacao(${index})">Remover</button>
-    `;
-    lista.appendChild(div);
-  });
-}
+  <script>
+    let score = 0;
+    const scoreDisplay = document.getElementById("score");
+    const clickBtn = document.getElementById("clickBtn");
 
-
-
+    clickBtn.addEventListener("click", () => {
+      score++;
+      scoreDisplay.textContent = "Pontos: " + score;
+    });
+  </script>
+</body>
+</html>
