@@ -1,55 +1,147 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Click Game</title>
-  <style>
-    body {
-      text-align: center;
-      background: #f0f0f0;
-      font-family: Arial, sans-serif;
-    }
-    h1 {
-      margin-top: 30px;
-      font-size: 2.5em;
-      color: #333;
-    }
-    #score {
-      font-size: 2em;
-      margin: 20px;
-      color: #444;
-    }
-    #clickBtn {
-      background-color: #ffcc00;
-      border: none;
-      padding: 20px 40px;
-      font-size: 1.5em;
-      border-radius: 15px;
-      cursor: pointer;
-      box-shadow: 0px 4px #999;
-      transition: 0.2s;
-    }
-    #clickBtn:active {
-      box-shadow: 0px 2px #666;
-      transform: translateY(2px);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Click Game com Loja Avançada</title>
+<style>
+  body {
+    text-align: center;
+    background: #f0f0f0;
+    font-family: Arial, sans-serif;
+  }
+  h1 {
+    margin-top: 20px;
+    font-size: 2.5em;
+    color: #333;
+  }
+  #score {
+    font-size: 2em;
+    margin: 15px;
+    color: #444;
+  }
+  #clickBtn {
+    background-color: #ffcc00;
+    border: none;
+    padding: 20px 40px;
+    font-size: 1.5em;
+    border-radius: 15px;
+    cursor: pointer;
+    box-shadow: 0px 4px #999;
+    transition: 0.2s;
+    margin-bottom: 25px;
+  }
+  #clickBtn:active {
+    box-shadow: 0px 2px #666;
+    transform: translateY(2px);
+  }
+  .store {
+    background: white;
+    width: 320px;
+    margin: auto;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+  }
+  .upgrade {
+    background: #ddd;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .upgrade:hover {
+    background: #ccc;
+  }
+</style>
 </head>
 <body>
-  <h1>Click Game</h1>
-  <div id="score">Pontos: 0</div>
-  <button id="clickBtn">Clique Aqui!</button>
 
-  <script>
-    let score = 0;
-    const scoreDisplay = document.getElementById("score");
-    const clickBtn = document.getElementById("clickBtn");
+<h1>Click Game</h1>
+<div id="score">Pontos: 0</div>
+<button id="clickBtn">Clique Aqui!</button>
 
-    clickBtn.addEventListener("click", () => {
-      score++;
-      scoreDisplay.textContent = "Pontos: " + score;
-    });
-  </script>
+<div class="store">
+  <h2>🛒 Loja</h2>
+
+  <div class="upgrade" onclick="buyUpgrade('melhorMouse')">
+    🖱️ Melhor Mouse (50 pontos) <br> ➕ Ganha +1 ponto por clique
+  </div>
+
+  <div class="upgrade" onclick="buyUpgrade('dedoTurbo')">
+    ⚡ Dedo Turbo (100 pontos) <br> 🎲 20% de chance de ganhar o DOBRO de pontos
+  </div>
+
+  <div class="upgrade" onclick="buyUpgrade('autoClicker')">
+    🤖 AutoClicker (200 pontos) <br> 🔄 Gera 1 ponto automático por segundo
+  </div>
+
+  <div class="upgrade" onclick="buyUpgrade('triplicador')">
+    🔥 Triplicador (300 pontos) <br> ✖️ Triplica os pontos ganhos por clique
+  </div>
+
+</div>
+
+<script>
+  let score = 0;
+  let pointsPerClick = 1;
+  let doubleChance = 0;
+  let tripleActive = false;
+  let autoClickerOn = false;
+
+  const scoreDisplay = document.getElementById("score");
+  const clickBtn = document.getElementById("clickBtn");
+
+  clickBtn.addEventListener("click", () => {
+    let pointsGained = pointsPerClick;
+
+    // Chance de ganhar o DOBRO
+    if (Math.random() < doubleChance) {
+      pointsGained *= 2;
+    }
+
+    // Se o triplicador foi comprado, TRIPLICA os pontos
+    if (tripleActive) {
+      pointsGained *= 3;
+    }
+
+    score += pointsGained;
+    updateScore();
+  });
+
+  function updateScore() {
+    scoreDisplay.textContent = "Pontos: " + score;
+  }
+
+  function buyUpgrade(type) {
+    if (type === 'melhorMouse' && score >= 50) {
+      score -= 50;
+      pointsPerClick += 1;
+      alert("✅ Você comprou o Melhor Mouse! Agora cada clique vale +" + pointsPerClick + " pontos.");
+    }
+    if (type === 'dedoTurbo' && score >= 100) {
+      score -= 100;
+      doubleChance = 0.2;
+      alert("✅ Você comprou o Dedo Turbo! Agora há 20% de chance de ganhar o DOBRO de pontos!");
+    }
+    if (type === 'autoClicker' && score >= 200 && !autoClickerOn) {
+      score -= 200;
+      autoClickerOn = true;
+      alert("✅ Você comprou o AutoClicker! Agora você ganha 1 ponto por segundo automaticamente!");
+      setInterval(() => {
+        score += 1;
+        updateScore();
+      }, 1000);
+    }
+    if (type === 'triplicador' && score >= 300 && !tripleActive) {
+      score -= 300;
+      tripleActive = true;
+      alert("✅ Você comprou o Triplicador! Agora TODOS os cliques dão TRIPLO de pontos!");
+    }
+    updateScore();
+  }
+</script>
+
 </body>
 </html>
