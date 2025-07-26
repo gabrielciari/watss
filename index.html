@@ -2,118 +2,127 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Chat em Tempo Real</title>
+  <title>Controle de Vencimento de Ração</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #ece5dd; margin: 0; }
-    .chat-box {
-      max-width: 600px;
-      margin: 30px auto;
-      background: white;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      height: 80vh;
-      display: flex;
-      flex-direction: column;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
     }
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      padding-right: 10px;
+    h1 {
+      text-align: center;
+      color: #4CAF50;
     }
-    .message {
-      background: #dcf8c6;
+    input, button {
       padding: 10px;
-      border-radius: 8px;
-      margin: 5px 0;
+      margin: 5px;
+      width: 100%;
+      box-sizing: border-box;
     }
-    .input-area {
-      display: flex;
-    }
-    #messageInput {
-      flex: 1;
+    .racao {
       padding: 10px;
-      font-size: 16px;
+      border-bottom: 1px solid #ccc;
     }
-    button {
-      padding: 10px 15px;
-      background: #128c7e;
-      color: white;
-      border: none;
-      cursor: pointer;
+    .vencida {
+      background-color: #ffdddd;
     }
-    button:hover {
-      background: #075e54;
+    .alerta {
+      background-color: #fff3cd;
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Controle de Vencimento de Ração</h1>
 
-<div class="chat-box">
-  <div id="messages"></div>
-  <div class="input-area">
-    <input type="text" id="messageInput" placeholder="Digite uma mensagem...">
-    <button onclick="sendMessage()">Enviar</button>
+    <input type="text" id="nome" placeholder="Nome da ração">
+    <input type="date" id="validade">
+    <input type="number" id="quantidade" placeholder="Quantidade (kg)">
+    <button onclick="adicionarRacao()">Adicionar</button>
+
+    <h2>Rações Cadastradas:</h2>
+    <div id="listaRacoes"></div>
   </div>
-</div>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    const lista = document.getElementById("listaRacoes");
 
-<script>
-  // Configuração do Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyA_P_c_-hDsMyzIDZN8bpBFJ1C-1OGF5F0",
-    authDomain: "pizzaria-social.firebaseapp.com",
-    databaseURL: "https://pizzaria-social-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "pizzaria-social",
-    storageBucket: "pizzaria-social.firebasestorage.app",
-    messagingSenderId: "215385735729",
-    appId: "1:215385735729:web:303178bcfae6366f6a0b10",
-    measurementId: "G-PKBTQ5GRRD"
-  };
-
-  // Inicializa Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  const messagesRef = db.collection("messages");
-
-  // Exibe mensagens em tempo real
-  messagesRef.orderBy("timestamp").onSnapshot(snapshot => {
-    const messages = document.getElementById("messages");
-    messages.innerHTML = "";
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const div = document.createElement("div");
-      div.className = "message";
-      div.textContent = data.text;
-      messages.appendChild(div);
-    });
-    messages.scrollTop = messages.scrollHeight;
-  });
-
-  // Envia mensagem
-  function sendMessage() {
-    const input = document.getElementById("messageInput");
-    const text = input.value.trim();
-    if (text !== "") {
-      messagesRef.add({
-        text: text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      input.value = "";
+    function salvarRacoes(racoes) {
+      localStorage.setItem("racoes", JSON.stringify(racoes));
     }
-  }
 
-  // Pressionar Enter envia mensagem
-  document.getElementById("messageInput").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") sendMessage();
-  });
-</script>
+    function carregarRacoes() {
+      return JSON.parse(localStorage.getItem("racoes") || "[]");
+    }
 
+    function adicionarRacao() {
+      const nome = document.getElementById("nome").value.trim();
+      const validade = document.getElementById("validade").value;
+      const quantidade = document.getElementById("quantidade").value;
+
+      if (!nome || !validade || !quantidade) {
+        alert("Preencha todos os campos!");
+        return;
+      }
+
+      const racoes = carregarRacoes();
+      racoes.push({ nome, validade, quantidade });
+      salvarRacoes(racoes);
+      document.getElementById("nome").value = "";
+      document.getElementById("validade").value = "";
+      document.getElementById("quantidade").value = "";
+      mostrarRacoes();
+    }
+
+    function mostrarRacoes() {
+      const racoes = carregarRacoes();
+      lista.innerHTML = "";
+
+      const hoje = new Date();
+
+      racoes.forEach((racao, index) => {
+        const div = document.createElement("div");
+        div.className = "racao";
+        
+        const dataValidade = new Date(racao.validade);
+        const diasRestantes = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
+
+        if (diasRestantes < 0) {
+          div.classList.add("vencida");
+        } else if (diasRestantes <= 5) {
+          div.classList.add("alerta");
+        }
+
+        div.innerHTML = `
+          <strong>${racao.nome}</strong><br>
+          Validade: ${racao.validade} (${diasRestantes < 0 ? 'VENCIDA' : diasRestantes + ' dia(s)'})<br>
+          Quantidade: ${racao.quantidade} kg<br>
+          <button onclick="removerRacao(${index})">Remover</button>
+        `;
+        lista.appendChild(div);
+      });
+    }
+
+    function removerRacao(index) {
+      const racoes = carregarRacoes();
+      racoes.splice(index, 1);
+      salvarRacoes(racoes);
+      mostrarRacoes();
+    }
+
+    // Mostrar ao carregar a página
+    mostrarRacoes();
+  </script>
 </body>
 </html>
+
 
