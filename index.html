@@ -14,7 +14,16 @@
   .search-bar input {width: 100%; padding: 8px; border-radius: 5px; border: none;}
   .icons i {margin-left: 15px; cursor: pointer;}
   nav {background-color: #222; padding: 10px; text-align: center;}
-  nav a {color: white; margin: 0 15px; text-decoration: none; font-weight: bold;}
+  nav button {
+      background: none;
+      border: none;
+      color: white;
+      margin: 0 15px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+  }
+  nav button:hover {text-decoration: underline; color: red;}
   .banner {background-color: red; color: white; padding: 30px; text-align: center; font-size: 24px; font-weight: bold;}
   .categorias {display: flex; justify-content: center; padding: 20px; gap: 15px;}
   .categorias div {background: white; padding: 15px; border-radius: 10px; text-align: center; width: 100px; box-shadow: 0 0 5px rgba(0,0,0,0.1);}
@@ -23,36 +32,6 @@
   .produto img {max-width: 100%; height: 150px; object-fit: contain;}
   .produto button {background-color: red; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; margin-top: 10px; cursor: pointer; font-weight: bold;}
   footer {background: #111; color: white; text-align: center; padding: 20px; margin-top: 20px;}
-  .whatsapp-btn {position: fixed; bottom: 20px; right: 20px; background: #25D366; color: white; padding: 15px; border-radius: 50%; font-size: 24px; box-shadow: 0 0 10px rgba(0,0,0,0.3);}
-  
-  /* MODAL DO CARRINHO */
-  #carrinhoModal, #dadosClienteModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-  }
-  .conteudo {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 400px;
-      max-height: 80vh;
-      overflow-y: auto;
-  }
-  .conteudo h2 {margin-top: 0;}
-  .item-carrinho {border-bottom: 1px solid #ddd; padding: 10px 0;}
-  .btn-finalizar {background: green; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; margin-top: 10px; cursor: pointer; font-weight: bold;}
-  .input-campo {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-  }
 </style>
 </head>
 
@@ -63,39 +42,49 @@
     <input type="text" placeholder="Buscar produtos...">
   </div>
   <div class="icons">
-    <i class="fas fa-shopping-cart" onclick="abrirCarrinho()"></i>
+    <i class="fas fa-shopping-cart"></i>
   </div>
 </header>
 
+<!-- 🔥 BOTÕES DE CATEGORIA -->
 <nav>
-  <a href="#">Roupas</a>
-  <a href="#">Acessórios</a>
-  <a href="#">Games</a>
-  <a href="#">Casa</a>
+  <button onclick="filtrarProdutos('todos')">Todos</button>
+  <button onclick="filtrarProdutos('roupas')">Roupas</button>
+  <button onclick="filtrarProdutos('acessorios')">Acessórios</button>
+  <button onclick="filtrarProdutos('games')">Games</button>
+  <button onclick="filtrarProdutos('casa')">Casa</button>
 </nav>
 
 <div class="banner">GANHE CUPONS - MELHORES OFERTAS DO DIA</div>
 
-<div class="categorias">
-  <div>👕<br>Roupas</div>
-  <div>⌚<br>Acessórios</div>
-  <div>🎮<br>Games</div>
-  <div>🏠<br>Casa</div>
-</div>
-
+<!-- 🔥 LISTA DE PRODUTOS -->
 <section class="produtos">
-  <div class="produto">
+  <div class="produto" data-categoria="roupas">
     <img src="https://via.placeholder.com/150" alt="Produto 1">
     <h3>Moletom Vermelho</h3>
     <p>R$ 120,00</p>
-    <button onclick="addCarrinho('Moletom Vermelho', 120)">Adicionar ao Carrinho</button>
+    <button>Adicionar ao Carrinho</button>
   </div>
 
-  <div class="produto">
+  <div class="produto" data-categoria="acessorios">
     <img src="https://via.placeholder.com/150" alt="Produto 2">
-    <h3>AirPods</h3>
-    <p>R$ 250,00</p>
-    <button onclick="addCarrinho('AirPods', 250)">Adicionar ao Carrinho</button>
+    <h3>Relógio Digital</h3>
+    <p>R$ 80,00</p>
+    <button>Adicionar ao Carrinho</button>
+  </div>
+
+  <div class="produto" data-categoria="games">
+    <img src="https://via.placeholder.com/150" alt="Produto 3">
+    <h3>Controle PS5</h3>
+    <p>R$ 350,00</p>
+    <button>Adicionar ao Carrinho</button>
+  </div>
+
+  <div class="produto" data-categoria="casa">
+    <img src="https://via.placeholder.com/150" alt="Produto 4">
+    <h3>Jogo de Panelas</h3>
+    <p>R$ 200,00</p>
+    <button>Adicionar ao Carrinho</button>
   </div>
 </section>
 
@@ -103,111 +92,17 @@
   <p>© 2025 SHOP ON BRASIL - Todos os direitos reservados</p>
 </footer>
 
-<a href="https://wa.me/5511999999999" target="_blank" class="whatsapp-btn">
-  <i class="fab fa-whatsapp"></i>
-</a>
-
-<!-- MODAL DO CARRINHO -->
-<div id="carrinhoModal">
-  <div class="conteudo">
-    <h2>🛒 Seu Carrinho</h2>
-    <div id="listaCarrinho"></div>
-    <button class="btn-finalizar" onclick="abrirFormulario()">✅ Finalizar Pedido</button>
-    <button style="margin-top:10px; width:100%;" onclick="fecharCarrinho()">❌ Fechar</button>
-  </div>
-</div>
-
-<!-- MODAL FORMULÁRIO DADOS DO CLIENTE -->
-<div id="dadosClienteModal">
-  <div class="conteudo">
-    <h2>📋 Seus Dados</h2>
-    <input type="text" id="nomeCliente" class="input-campo" placeholder="Seu nome completo">
-    <input type="text" id="enderecoCliente" class="input-campo" placeholder="Seu endereço completo">
-    <button class="btn-finalizar" onclick="finalizarPedido()">📲 Enviar Pedido no WhatsApp</button>
-    <button style="margin-top:10px; width:100%;" onclick="fecharFormulario()">❌ Cancelar</button>
-  </div>
-</div>
-
 <script>
-let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+function filtrarProdutos(categoria) {
+    let produtos = document.querySelectorAll('.produto');
 
-function addCarrinho(produto, preco) {
-    carrinho.push({produto, preco});
-    localStorage.setItem('carrinho', JSON.stringify(carrinho));
-    alert('✅ Produto adicionado ao carrinho!');
-}
-
-function abrirCarrinho() {
-    document.getElementById('carrinhoModal').style.display = 'flex';
-    atualizarCarrinho();
-}
-
-function fecharCarrinho() {
-    document.getElementById('carrinhoModal').style.display = 'none';
-}
-
-function atualizarCarrinho() {
-    let lista = document.getElementById('listaCarrinho');
-    lista.innerHTML = '';
-    let total = 0;
-
-    carrinho.forEach((item, index) => {
-        total += item.preco;
-        lista.innerHTML += `
-            <div class="item-carrinho">
-                ${item.produto} - R$ ${item.preco},00 
-                <button onclick="removerItem(${index})">🗑</button>
-            </div>`;
+    produtos.forEach(produto => {
+        if (categoria === 'todos' || produto.dataset.categoria === categoria) {
+            produto.style.display = 'block';
+        } else {
+            produto.style.display = 'none';
+        }
     });
-
-    lista.innerHTML += `<p><strong>Total: R$ ${total},00</strong></p>`;
-}
-
-function removerItem(index) {
-    carrinho.splice(index, 1);
-    localStorage.setItem('carrinho', JSON.stringify(carrinho));
-    atualizarCarrinho();
-}
-
-function abrirFormulario() {
-    if (carrinho.length === 0) {
-        alert('⚠️ Seu carrinho está vazio!');
-        return;
-    }
-    fecharCarrinho();
-    document.getElementById('dadosClienteModal').style.display = 'flex';
-}
-
-function fecharFormulario() {
-    document.getElementById('dadosClienteModal').style.display = 'none';
-}
-
-function finalizarPedido() {
-    let nome = document.getElementById('nomeCliente').value;
-    let endereco = document.getElementById('enderecoCliente').value;
-
-    if (!nome || !endereco) {
-        alert('⚠️ Por favor, preencha seu nome e endereço.');
-        return;
-    }
-
-    let mensagem = `*Novo Pedido via Site*%0A%0A`;
-    mensagem += `👤 *Cliente:* ${nome}%0A`;
-    mensagem += `📍 *Endereço:* ${endereco}%0A%0A`;
-    mensagem += `🛒 *Itens do pedido:*%0A`;
-
-    carrinho.forEach(item => {
-        mensagem += `• ${item.produto} - R$ ${item.preco},00%0A`;
-    });
-
-    let total = carrinho.reduce((acc, item) => acc + item.preco, 0);
-    mensagem += `%0A💰 *Total: R$ ${total},00*`;
-
-    window.open(`https://wa.me/5511999999999?text=${mensagem}`, "_blank");
-
-    localStorage.removeItem('carrinho');
-    carrinho = [];
-    fecharFormulario();
 }
 </script>
 
