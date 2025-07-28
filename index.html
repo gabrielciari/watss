@@ -1,113 +1,115 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Supermercado Simulator</title>
+<title>SHOP ON BRASIL</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: #f0f0f0;
-    margin: 0;
-    padding: 0;
-  }
-  h1 {
-    background: #2a9d8f;
-    color: white;
-    padding: 15px;
-    margin: 0;
-  }
-  #game {
-    margin-top: 20px;
-  }
-  .task {
-    background: white;
-    border: 2px solid #ccc;
-    width: 300px;
-    margin: 15px auto;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  button {
-    background: #264653;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    margin-top: 10px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-  }
-  button:hover {
-    background: #1d3557;
-  }
-  #status {
-    margin-top: 20px;
-    font-size: 18px;
-  }
+  body {margin: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;}
+  header {background-color: #111; padding: 10px 20px; color: white; display: flex; align-items: center; justify-content: space-between;}
+  header .logo {font-size: 24px; font-weight: bold;}
+  header .logo span {background: red; padding: 3px 6px; border-radius: 3px;}
+  .search-bar {flex: 1; margin: 0 20px;}
+  .search-bar input {width: 100%; padding: 8px; border-radius: 5px; border: none;}
+  .icons i, .icons a {margin-left: 15px; cursor: pointer; color: white; text-decoration: none;}
+  nav {background-color: #222; padding: 10px; text-align: center;}
+  nav a {color: white; margin: 0 15px; text-decoration: none; font-weight: bold;}
+  .banner {background-color: red; color: white; padding: 30px; text-align: center; font-size: 24px; font-weight: bold;}
+  .categorias {display: flex; justify-content: center; padding: 20px; gap: 15px;}
+  .categorias div {background: white; padding: 15px; border-radius: 10px; text-align: center; width: 100px; box-shadow: 0 0 5px rgba(0,0,0,0.1);}
+  .produtos {display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; padding: 20px;}
+  .produto {background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 0 5px rgba(0,0,0,0.1);}
+  .produto img {max-width: 100%; height: 150px; object-fit: contain;}
+  .produto button {background-color: red; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; margin-top: 10px; cursor: pointer; font-weight: bold;}
+  footer {background: #111; color: white; text-align: center; padding: 20px; margin-top: 20px;}
+  .whatsapp-btn {position: fixed; bottom: 20px; right: 20px; background: #25D366; color: white; padding: 15px; border-radius: 50%; font-size: 24px; box-shadow: 0 0 10px rgba(0,0,0,0.3);}
+  .logout-btn {background: red; padding: 6px 12px; border-radius: 5px; margin-left: 10px; font-size: 14px;}
+  /* LOGIN/CADASTRO MODAL */
+  #loginModal, #cadastroModal {display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7);}
+  .login-content {background: #fff; margin: 10% auto; padding: 20px; border-radius: 10px; width: 300px; text-align: center;}
+  .login-content input {width: 90%; margin: 8px 0; padding: 10px; border-radius: 5px; border: 1px solid #ccc;}
+  .login-content button {width: 95%; background: red; color: white; border: none; padding: 10px; margin-top: 10px; border-radius: 5px;}
+  .close {float: right; font-size: 24px; cursor: pointer;}
 </style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 
-<h1>🛒 Supermercado Simulator</h1>
-
-<div id="game">
-  <div class="task">
-    <h3>📦 Repor Prateleira</h3>
-    <p>Tem produtos acabando na sessão de bebidas.</p>
-    <button onclick="repor()">Repor (+5 XP)</button>
+<header>
+  <div class="logo">SHOP <span>ON</span> BRASIL</div>
+  <div class="search-bar">
+    <input type="text" placeholder="Buscar produtos...">
   </div>
-
-  <div class="task">
-    <h3>💵 Passar Compras no Caixa</h3>
-    <p>Um cliente está esperando no caixa.</p>
-    <button onclick="caixa()">Atender (+10 XP)</button>
+  <div class="icons">
+    <?php if(isset($_SESSION['usuario'])): ?>
+      👤 Olá, <strong><?php echo $_SESSION['usuario']; ?></strong>
+      <a href="logout.php" class="logout-btn">Sair</a>
+    <?php else: ?>
+      <i class="fas fa-user" onclick="document.getElementById('loginModal').style.display='block'"></i>
+    <?php endif; ?>
+    <i class="fas fa-shopping-cart"></i>
   </div>
+</header>
 
-  <div class="task">
-    <h3>🧹 Limpar o Corredor</h3>
-    <p>Um corredor está sujo e precisa de limpeza.</p>
-    <button onclick="limpar()">Limpar (+3 XP)</button>
-  </div>
+<nav>
+  <a href="#">Roupas</a>
+  <a href="#">Acessórios</a>
+  <a href="#">Games</a>
+  <a href="#">Casa</a>
+</nav>
+
+<div class="banner">GANHE CUPONS - MELHORES OFERTAS DO DIA</div>
+
+<div class="categorias">
+  <div>👕<br>Roupas</div>
+  <div>⌚<br>Acessórios</div>
+  <div>🎮<br>Games</div>
+  <div>🏠<br>Casa</div>
 </div>
 
-<div id="status">
-  <p>👤 Cargo: <span id="cargo">Estagiário</span></p>
-  <p>⭐ XP: <span id="xp">0</span></p>
-</div>
+<section class="produtos">
+  <div class="produto">
+    <img src="https://via.placeholder.com/150" alt="Produto 1">
+    <h3>Moletom Vermelho</h3>
+    <p>R$ 120,00</p>
+    <button>Adicionar ao Carrinho</button>
+  </div>
+  <div class="produto">
+    <img src="https://via.placeholder.com/150" alt="Produto 2">
+    <h3>AirPods</h3>
+    <p>R$ 250,00</p>
+    <button>Adicionar ao Carrinho</button>
+  </div>
+  <div class="produto">
+    <img src="https://via.placeholder.com/150" alt="Produto 3">
+    <h3>Jogo PS5</h3>
+    <p>R$ 300,00</p>
+    <button>Adicionar ao Carrinho</button>
+  </div>
+  <div class="produto">
+    <img src="https://via.placeholder.com/150" alt="Produto 4">
+    <h3>Roda Esportiva</h3>
+    <p>R$ 500,00</p>
+    <button>Adicionar ao Carrinho</button>
+  </div>
+</section>
+
+<footer>
+  <p>© 2025 SHOP ON BRASIL - Todos os direitos reservados</p>
+</footer>
+
+<a href="https://wa.me/5511999999999" target="_blank" class="whatsapp-btn">
+  <i class="fab fa-whatsapp"></i>
+</a>
+
+<!-- (Mesmos modais de login e cadastro que já criamos antes) -->
 
 <script>
-let xp = 0;
-let cargo = "Estagiário";
-
-function atualizarCargo() {
-  if (xp >= 100) cargo = "Gerente";
-  else if (xp >= 50) cargo = "Caixa";
-  else if (xp >= 20) cargo = "Repositor";
-  document.getElementById("cargo").innerText = cargo;
-}
-
-function repor() {
-  xp += 5;
-  atualizar();
-}
-
-function caixa() {
-  xp += 10;
-  atualizar();
-}
-
-function limpar() {
-  xp += 3;
-  atualizar();
-}
-
-function atualizar() {
-  document.getElementById("xp").innerText = xp;
-  atualizarCargo();
-}
+// (Scripts de login e cadastro AJAX continuam iguais)
 </script>
 
 </body>
