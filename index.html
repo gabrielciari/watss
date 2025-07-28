@@ -1,6 +1,115 @@
 <?php
 session_start();
+
+/* 🎯 CONEXÃO COM O BANCO DE DADOS */
+$host = 'localhost';
+$db   = 'shopon';
+$user = 'root';
+$pass = '';
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Erro na conexão: " . $e->getMessage());
+}
+
+/* ✅ LOGIN */
+if (isset($_POST['acao']) && $_POST['acao'] == 'login') {
+    $email = $_POST['email'];
+    $senha = $_POST['senha'];
+
+    $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = ?");
+    $stmt->execute([$email]);
+    $usuario = $stmt->fetch();
+
+    if ($usuario && password_verify($senha, $usuario['senha'])) {
+        $_SESSION['usuario_id'] = $usuario['id'];
+        $_SESSION['usuario'] = $usuario['nome'];
+        echo json_encode(['status' => 'success', 'message' => '✅ Login realizado!']);
+        exit;
+    } else {
+        echo json_encode(['status' => 'error', 'message' => '❌ Email ou senha inválidos!']);
+        exit;
+    }
+}
+
+/* ✅ CADASTRO */
+if (isset($_POST['acao']) && $_POST['acao'] == 'cadastro') {
+    $nome = $_POST['nome'];
+    $email = $_POST['email'];
+    $senha = password_hash($_POST['senha'], PASSWORD_DEFAULT);
+
+    $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)");
+    $stmt->execute([$nome, $email, $senha]);
+
+    echo json_encode(['status' => 'success', 'message' => '✅ Cadastro realizado!']);
+    exit;
+}
+
+/* ✅ LOGOUT */
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header("Location: index.php");
+    exit;
+}
+
+/* ✅ ADICIONAR AO CARRINHO */
+if (isset($_POST['acao']) && $_POST['acao'] == 'add_carrinho') {
+    if (!isset($_SESSION['usuario_id'])) {
+        echo "<script>alert('⚠️ Faça login para adicionar itens!');</script>";
+    } else {
+        $usuario_id = $_SESSION['usuario_id'];
+        $produto_id = $_POST['produto_id'];
+
+        $sql = "SELECT * FROM carrinho WHERE usuario_id = ? AND produto_id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$usuario_id, $produto_id]);
+
+        if ($stmt->rowCount() > 0) {
+            $pdo->prepare("UPDATE carrinho SET quantidade = quantidade + 1 WHERE usuario_id = ? AND produto_id = ?")
+                ->execute([$usuario_id, $produto_id]);
+        } else {
+            $pdo->prepare("INSERT INTO carrinho (usuario_id, produto_id, quantidade) VALUES (?, ?, 1)")
+                ->execute([$usuario_id, $produto_id]);
+        }
+        echo "<script>alert('✅ Produto adicionado ao carrinho!');</script>";
+    }
+}
+
+/* ✅ FINALIZAR PEDIDO */
+if (isset($_POST['acao']) && $_POST['acao'] == 'finalizar') {
+    $usuario_id = $_SESSION['usuario_id'];
+    $stmt = $pdo->prepare("SELECT * FROM carrinho WHERE usuario_id = ?");
+    $stmt->execute([$usuario_id]);
+    $itens = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (count($itens) > 0) {
+        $total = 0;
+        foreach ($itens as $item) {
+            $p = $pdo->prepare("SELECT preco FROM produtos WHERE id = ?");
+            $p->execute([$item['produto_id']]);
+            $preco = $p->fetchColumn();
+            $total += $preco * $item['quantidade'];
+        }
+
+        $pdo->prepare("INSERT INTO pedidos (usuario_id, total) VALUES (?, ?)")->execute([$usuario_id, $total]);
+        $pedido_id = $pdo->lastInsertId();
+
+        foreach ($itens as $item) {
+            $p = $pdo->prepare("SELECT preco FROM produtos WHERE id = ?");
+            $p->execute([$item['produto_id']]);
+            $preco = $p->fetchColumn();
+
+            $pdo->prepare("INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, preco) VALUES (?, ?, ?, ?)")
+                ->execute([$pedido_id, $item['produto_id'], $item['quantidade'], $preco]);
+        }
+
+        $pdo->prepare("DELETE FROM carrinho WHERE usuario_id = ?")->execute([$usuario_id]);
+        echo "<script>alert('✅ Pedido finalizado com sucesso!');</script>";
+    }
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -15,7 +124,7 @@ session_start();
   header .logo span {background: red; padding: 3px 6px; border-radius: 3px;}
   .search-bar {flex: 1; margin: 0 20px;}
   .search-bar input {width: 100%; padding: 8px; border-radius: 5px; border: none;}
-  .icons i, .icons a {margin-left: 15px; cursor: pointer; color: white; text-decoration: none;}
+  .icons i {margin-left: 15px; cursor: pointer;}
   nav {background-color: #222; padding: 10px; text-align: center;}
   nav a {color: white; margin: 0 15px; text-decoration: none; font-weight: bold;}
   .banner {background-color: red; color: white; padding: 30px; text-align: center; font-size: 24px; font-weight: bold;}
@@ -27,18 +136,11 @@ session_start();
   .produto button {background-color: red; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; margin-top: 10px; cursor: pointer; font-weight: bold;}
   footer {background: #111; color: white; text-align: center; padding: 20px; margin-top: 20px;}
   .whatsapp-btn {position: fixed; bottom: 20px; right: 20px; background: #25D366; color: white; padding: 15px; border-radius: 50%; font-size: 24px; box-shadow: 0 0 10px rgba(0,0,0,0.3);}
-  .logout-btn {background: red; padding: 6px 12px; border-radius: 5px; margin-left: 10px; font-size: 14px;}
-  /* LOGIN/CADASTRO MODAL */
-  #loginModal, #cadastroModal {display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7);}
-  .login-content {background: #fff; margin: 10% auto; padding: 20px; border-radius: 10px; width: 300px; text-align: center;}
-  .login-content input {width: 90%; margin: 8px 0; padding: 10px; border-radius: 5px; border: 1px solid #ccc;}
-  .login-content button {width: 95%; background: red; color: white; border: none; padding: 10px; margin-top: 10px; border-radius: 5px;}
-  .close {float: right; font-size: 24px; cursor: pointer;}
 </style>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-<body>
 
+<body>
 <header>
   <div class="logo">SHOP <span>ON</span> BRASIL</div>
   <div class="search-bar">
@@ -47,7 +149,7 @@ session_start();
   <div class="icons">
     <?php if(isset($_SESSION['usuario'])): ?>
       👤 Olá, <strong><?php echo $_SESSION['usuario']; ?></strong>
-      <a href="logout.php" class="logout-btn">Sair</a>
+      <a href="?logout=1" style="color:red; margin-left:10px;">[Sair]</a>
     <?php else: ?>
       <i class="fas fa-user" onclick="document.getElementById('loginModal').style.display='block'"></i>
     <?php endif; ?>
@@ -72,30 +174,27 @@ session_start();
 </div>
 
 <section class="produtos">
-  <div class="produto">
-    <img src="https://via.placeholder.com/150" alt="Produto 1">
-    <h3>Moletom Vermelho</h3>
-    <p>R$ 120,00</p>
-    <button>Adicionar ao Carrinho</button>
-  </div>
-  <div class="produto">
-    <img src="https://via.placeholder.com/150" alt="Produto 2">
-    <h3>AirPods</h3>
-    <p>R$ 250,00</p>
-    <button>Adicionar ao Carrinho</button>
-  </div>
-  <div class="produto">
-    <img src="https://via.placeholder.com/150" alt="Produto 3">
-    <h3>Jogo PS5</h3>
-    <p>R$ 300,00</p>
-    <button>Adicionar ao Carrinho</button>
-  </div>
-  <div class="produto">
-    <img src="https://via.placeholder.com/150" alt="Produto 4">
-    <h3>Roda Esportiva</h3>
-    <p>R$ 500,00</p>
-    <button>Adicionar ao Carrinho</button>
-  </div>
+  <form method="POST">
+    <input type="hidden" name="acao" value="add_carrinho">
+    <input type="hidden" name="produto_id" value="1">
+    <div class="produto">
+      <img src="https://via.placeholder.com/150" alt="Produto 1">
+      <h3>Moletom Vermelho</h3>
+      <p>R$ 120,00</p>
+      <button type="submit">Adicionar ao Carrinho</button>
+    </div>
+  </form>
+
+  <form method="POST">
+    <input type="hidden" name="acao" value="add_carrinho">
+    <input type="hidden" name="produto_id" value="2">
+    <div class="produto">
+      <img src="https://via.placeholder.com/150" alt="Produto 2">
+      <h3>AirPods</h3>
+      <p>R$ 250,00</p>
+      <button type="submit">Adicionar ao Carrinho</button>
+    </div>
+  </form>
 </section>
 
 <footer>
@@ -105,12 +204,6 @@ session_start();
 <a href="https://wa.me/5511999999999" target="_blank" class="whatsapp-btn">
   <i class="fab fa-whatsapp"></i>
 </a>
-
-<!-- (Mesmos modais de login e cadastro que já criamos antes) -->
-
-<script>
-// (Scripts de login e cadastro AJAX continuam iguais)
-</script>
 
 </body>
 </html>
